@@ -36,7 +36,8 @@ inquirer.prompt([
 ]).then((answers) => {
   // mount
   answers.urls
-    .map(url => data.find(choice => choice.name === url))
+    .map(url => data.find(item => item.name === url))
+    .filter(item => !isMounted(item.remote, item.local))
     .forEach(data => {
       execa.sync('mkdir', ['-p', data.local])
       const {stderr} = execa.sync('sshfs', [data.remote, data.local])
@@ -49,8 +50,8 @@ inquirer.prompt([
 
   // unmount rest
   data
-    .filter(choice => answers.urls.includes(choice.name) === false)
-    .filter(choice => isMounted(choice.remote, choice.local))
+    .filter(item => answers.urls.includes(item.name) === false)
+    .filter(item => isMounted(item.remote, item.local))
     .forEach(data => {
       const res = execa.sync('fusermount', ['-u', data.local])
       if (res.stderr) {
