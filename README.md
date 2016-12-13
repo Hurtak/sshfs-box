@@ -48,5 +48,4 @@
 - cleanup package.json
 - config validation
 - gifs
-- docs
-
+- write proper description and use it in this readme and in package.json
