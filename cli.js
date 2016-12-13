@@ -1,11 +1,18 @@
+#!/usr/bin/env node
+
 'use strict'
 
+const os = require('os')
 const fs = require('fs')
 const path = require('path')
 const execa = require('execa')
 const inquirer = require('inquirer')
 
-const config = fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8')
+const configPath = process.env.NODE_ENV === 'development'
+  ? path.join(__dirname, 'test.json')
+  : path.join(os.homedir(), '/.config/sshfs-box.json')
+
+const config = fs.readFileSync(configPath, 'utf8')
 const {urls, folder} = JSON.parse(config)
 
 const mounted = execa.shellSync('mount').stdout.split('\n')
