@@ -34,7 +34,7 @@ inquirer.prompt([
     choices: data
   }
 ]).then((answers) => {
-  // mount
+  // mount selected items that are not already mounted
   answers.urls
     .map(url => data.find(item => item.name === url))
     .filter(item => !isMounted(item.remote, item.local))
@@ -48,7 +48,7 @@ inquirer.prompt([
       console.log(`[x] mounted   ${data.remote}`)
     })
 
-  // unmount rest
+  // unmount items that have been unselected
   data
     .filter(item => answers.urls.includes(item.name) === false)
     .filter(item => isMounted(item.remote, item.local))
