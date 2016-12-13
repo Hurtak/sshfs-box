@@ -1,12 +1,19 @@
 {
   "name": "sshfs-box",
   "version": "1.0.0",
-  "description": "",
+  "description": "Easily mount/unmount remote directories with sshfs helper",
   "bin": {
     "sshfs-box": "cli.js"
   },
+  "engines": {
+    "node": ">=6"
+  },
   "keywords": [],
-  "author": "",
+  "author": {
+    "name": "Petr Huřťák",
+    "email": "petr.hurtak@gmail.com"
+  },
+  "repository": "hurtak/sshfs-box",
   "license": "ISC",
   "dependencies": {
     "execa": "0.5.0",
