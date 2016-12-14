@@ -1,6 +1,6 @@
 {
   "name": "sshfs-box",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Easily mount/unmount remote directories with sshfs helper",
   "bin": {
     "sshfs-box": "cli.js"
