@@ -1,14 +1,17 @@
 {
   "name": "sshfs-box",
   "version": "2.0.2",
-  "description": "Easily mount/unmount remote directories with sshfs helper",
+  "description": "Small CLI tool to simply mount/unmount remote sshfs directories",
   "bin": {
     "sshfs-box": "cli.js"
   },
   "engines": {
     "node": ">=6"
   },
-  "keywords": [],
+  "keywords": [
+    "sshfs",
+    "sftp"
+  ],
   "author": {
     "name": "Petr Huřťák",
     "email": "petr.hurtak@gmail.com"

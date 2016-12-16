@@ -1,6 +1,6 @@
 # SSHFS box
 
-- small CLI tool to simply mount/unmount remote sshfs directories
+- Small CLI tool to simply mount/unmount remote sshfs directories
 
 ## Prerequisites
 
@@ -44,6 +44,4 @@
 
 ## TODO
 
-- cleanup package.json
 - gifs
-- write proper description and use it in this readme and in package.json
