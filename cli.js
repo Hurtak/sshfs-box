@@ -7,6 +7,7 @@ const fs = require('fs')
 const path = require('path')
 const meow = require('meow')
 const execa = require('execa')
+const dedent = require('dedent')
 const inquirer = require('inquirer')
 
 // Global variables
@@ -34,17 +35,22 @@ const cli = meow(`
 
 // Main
 
-let config
+let configString
 try {
-  config = fs.readFileSync(configPath, 'utf8')
-  config = JSON.parse(config)
+  configString = fs.readFileSync(configPath, 'utf8')
 } catch (e) {}
 
 if (cli.flags.config) {
-  promptEditConfig(config).then(promptSshfs)
+  promptEditConfig(configString).then(promptSshfs)
 } else {
-  if (config) {
-    promptSshfs(config)
+  if (configString) {
+    const validation = validateConfigString(configString) // true ok, otherwise returns error string
+    if (validation === true) {
+      promptSshfs(JSON.parse(configString))
+    } else {
+      console.error(`${configPath} does not contain valid config, please fix it`)
+      promptEditConfig(configString).then(promptSshfs)
+    }
   } else {
     console.error(`Cant open config on ${configPath}, creating new config`)
     promptEditConfig().then(promptSshfs)
@@ -53,63 +59,48 @@ if (cli.flags.config) {
 
 // Prompt functions
 
-function promptEditConfig (defaultConfig) {
-  const setConfig = {
-    type: 'editor',
-    name: 'settings',
-    message: 'Configure sshfs-box',
-    default: JSON.stringify(defaultConfig, null, 2) || [
-      '{',
-      '  "urls": [',
-      '    "user@host1:dir",',
-      '    "user@host2:dir"',
-      '  ],',
-      `  "folder": "${path.join(os.homedir(), '/remote')}"`,
-      '}',
-      ''
-    ].join('\n'),
-    validate: function (text) {
-      let data
-      try {
-        data = JSON.parse(text)
-      } catch (e) {
-        return 'Error parsing JSON'
-      }
-
-      if (!data.urls) return `"urls" field is missing or empty`
-      if (!Array.isArray(data.urls)) return `"urls" filed is not an array`
-      if (data.urls.some(item => typeof item !== 'string')) return `all fields in "urls" filed need to be string`
-      if (!data.folder) return `"folder" field is missing or empy`
-      if (typeof data.folder !== 'string') return `"folder" field must be string`
-
-      return true
+function promptEditConfig (defaultConfigOverride) {
+  const defaultConfig = dedent`
+    {
+      "urls": [
+        "user@host1:dir",
+        "user@host2:dir"
+      ],
+      "folder": "${path.join(os.homedir(), '/remote')}"
     }
+  `
+
+  const promptSettings = {
+    type: 'editor',
+    name: 'config',
+    message: 'Configure sshfs-box',
+    default: defaultConfigOverride || defaultConfig,
+    validate: validateConfigString
   }
 
-  return inquirer.prompt(setConfig)
-    .then(function (response) {
-      const config = JSON.parse(response.settings)
+  return inquirer.prompt(promptSettings)
+    .then(response => {
+      const configString = response.config
+      const config = JSON.parse(configString)
       try {
         fs.mkdirSync(configDir)
       } catch (e) {}
 
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8')
+      fs.writeFileSync(configPath, configString, 'utf8')
 
       return config
     })
 }
 
 function promptSshfs (config) {
-  const {urls, folder} = config
-
   const mounted = execa.shellSync('mount').stdout.split('\n')
 
   function isMounted (remote, local) {
     return mounted.some(mount => mount.startsWith(remote + ' on ' + local))
   }
 
-  const data = urls.map(remote => {
-    const local = path.join(folder, remote).replace(/[:].*?$/, '') // user@host:dir -> user@host
+  const data = config.urls.map(remote => {
+    const local = path.join(config.folder, remote).replace(/[:].*?$/, '') // user@host:dir -> user@host
     const isChecked = isMounted(remote, local)
 
     return {
@@ -155,4 +146,21 @@ function promptSshfs (config) {
         console.log(`[ ] unmounted ${data.remote}`)
       })
   })
+}
+
+function validateConfigString (configString) {
+  let config
+  try {
+    config = JSON.parse(configString)
+  } catch (e) {
+    return 'Error parsing JSON'
+  }
+
+  if (!config.urls) return `"urls" field is missing or empty`
+  if (!Array.isArray(config.urls)) return `"urls" filed is not an array`
+  if (config.urls.some(item => typeof item !== 'string')) return `all fields in "urls" filed need to be string`
+  if (!config.folder) return `"folder" field is missing or empy`
+  if (typeof config.folder !== 'string') return `"folder" field must be string`
+
+  return true
 }

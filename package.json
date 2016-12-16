@@ -16,6 +16,7 @@
   "repository": "hurtak/sshfs-box",
   "license": "ISC",
   "dependencies": {
+    "dedent": "^0.6.0",
     "execa": "^0.5.0",
     "inquirer": "^2.0.0",
     "meow": "^3.7.0"
