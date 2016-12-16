@@ -16,12 +16,17 @@
 
 ## Usage
 
-- create `~/.config/sshfs-box.json` file
-- add configuration
-    - `urls` array of strings of remote locations where sshfs-box will try to connect
-    - `folder` string of local folder where remote locations will be mounted (does not need to exist)
+- `sshfs-box`
+    - starts the interface for mounting/unmounting
+    - when run for the first time, it will prompt to create new config
+- `sshfs-box --config`
+    - configure remote & local paths to connect
+    - config is stored in ~/.config/sshfs-box.json
 
-### Example configuration
+### Configuration
+
+- `urls` array of strings of remote locations where sshfs-box will try to connect
+- `folder` string of local folder where remote locations will be mounted (does not need to exist)
 
 ```json
 {
@@ -33,19 +38,12 @@
 }
 ```
 
-## Run
-
-- `sshfs-box` starts the interface for mounting/unmounting
-
 ## Screenshots
 
-- TODO
+![Preview of sshfs-box interface](img.png)
 
 ## TODO
 
-- add `--help` parameter
-- add `--config -c` parameter which would open editor interactive mode to edit sshfs-box.json
 - cleanup package.json
-- config validation
 - gifs
 - write proper description and use it in this readme and in package.json
