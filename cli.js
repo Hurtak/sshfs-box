@@ -108,10 +108,10 @@ function promptSshfs(config) {
   }
 
   const data = config.urls.map(remote => {
-    // user@host:/dir/dir -> user@host-.dir.div
+    // user@host:/dir/dir => user@host--dir-div
     const local = path.join(
       config.folder,
-      remote.replace(":", "-").replace("/", ".")
+      remote.replace(/:/g, "-").replace(/\//g, "-")
     );
 
     const isChecked = isMounted(remote, local);
