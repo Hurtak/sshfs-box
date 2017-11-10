@@ -1,6 +1,6 @@
 {
   "name": "sshfs-box",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "description": "Small CLI tool to simply mount/unmount remote sshfs directories",
   "license": "MIT",
   "repository": "hurtak/sshfs-box",
