@@ -4,11 +4,18 @@
 
 ## Prerequisites
 
-- node.js >= 6
-- npm
+- dependencies
+    - `node.js` >= 8
+    - commands used under the hood that your system needs to support:
+        - `sshfs`
+        - `fusermount`
+        - `mount`
+        - `ps`
+    - `npm` to install
+
 - operating system
-    - Linux - tested works
-    - MacOs - untested, should work
+    - Ubuntu - tested, works
+    - MacOs - tested on older versions, should work
 
 ## Install
 
@@ -41,3 +48,7 @@
 ## Screenshots
 
 ![Preview of sshfs-box interface](img/img.png)
+
+## Potential improvements
+
+- mounting/unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.

@@ -4,11 +4,11 @@
   TODO
     stdout helper functions?
     newline before each command compared to after?
-    async mounting?
     rename?
     docs
+      unify description in meow readme and package.json
     gifs
-    twitter
+    mention on twitter
 */
 
 "use strict";
@@ -31,7 +31,7 @@ const configPath = path.join(configDir, "sshfs-box.json");
 
 const cli = meow(
   `
-  Small CLI tool to mount/unmount directories on remote servers with sshfs.
+  Small CLI tool to mount/unmount directories remote servers with sshfs.
 
   Usage
     $ sshfs-box
