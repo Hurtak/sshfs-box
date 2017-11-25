@@ -2,7 +2,6 @@
 
 /*
   TODO
-    replace \n with os.newline?
     stdout helper functions?
     newline before each command compared to after?
     async mounting?
@@ -133,16 +132,16 @@ async function promptSshfs(config) {
         `! ERROR:     Error while getting sshfs mounted folders, exiting`
       )
     );
-    process.stdout.write(`\n`);
+    process.stdout.write(os.EOL);
     process.stdout.write(
       indentString(removeTrailingNewline(err.toString()), 4)
     );
-    process.stdout.write(`\n`);
+    process.stdout.write(os.EOL);
 
     return;
   }
 
-  const mounted = mountStr.stdout.split("\n");
+  const mounted = mountStr.stdout.split(os.EOL);
 
   const data = config.urls.map(remote => {
     // user@host:/dir/subdir => user@host--dir-subdir
@@ -169,7 +168,7 @@ async function promptSshfs(config) {
   });
   const selectedUrls = response.urls;
 
-  process.stdout.write(`\n`);
+  process.stdout.write(os.EOL);
 
   // mount selected items that are not already mounted
   const mountItems = selectedUrls
@@ -181,11 +180,11 @@ async function promptSshfs(config) {
       await execa("mkdir", ["-p", data.local]);
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       process.stdout.write(
         indentString(removeTrailingNewline(err.toString()), 4)
       );
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       continue;
     }
 
@@ -193,16 +192,16 @@ async function promptSshfs(config) {
       await execa("sshfs", [data.remote, data.local]);
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       process.stdout.write(
         indentString(removeTrailingNewline(err.toString()), 4)
       );
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       continue;
     }
 
     process.stdout.write(chalk.green(`+ Mounted:   ${data.remote}`));
-    process.stdout.write(`\n`);
+    process.stdout.write(os.EOL);
   }
 
   // unmount items that have been unselected
@@ -245,20 +244,20 @@ async function promptSshfs(config) {
       response = await execa("ps", ["-x"]);
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     Unable to run ps -x`));
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       process.stdout.write(
         indentString(removeTrailingNewline(err.toString()), 4)
       );
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       return;
     }
 
-    const processes = response.stdout.split("\n");
+    const processes = response.stdout.split(os.EOL);
     if (!processes) {
       process.stdout.write(
         chalk.bgRed(`! ERROR:     Unable to find any sshfs processes with`)
       );
-      process.stdout.write(`\n`);
+      process.stdout.write(os.EOL);
       return;
     }
 
@@ -270,7 +269,7 @@ async function promptSshfs(config) {
         process.stdout.write(
           chalk.bgRed(`! ERROR:     ${item.remote} Unable to sshfs processes`)
         );
-        process.stdout.write(`\n`);
+        process.stdout.write(os.EOL);
         continue;
       }
       const pidMatches = processRow.match(/^\s*\d+/);
@@ -282,7 +281,7 @@ async function promptSshfs(config) {
             `! ERROR:     ${item.remote} Unable to parse sshfs processes id`
           )
         );
-        process.stdout.write(`\n`);
+        process.stdout.write(os.EOL);
         continue;
       }
 
@@ -296,18 +295,18 @@ async function promptSshfs(config) {
             `! ERROR:     ${item.remote} Unable to kill sshfs process`
           )
         );
-        process.stdout.write(`\n`);
+        process.stdout.write(os.EOL);
         process.stdout.write(
           indentString(removeTrailingNewline(err.toString()), 4)
         );
-        process.stdout.write(`\n`);
+        process.stdout.write(os.EOL);
         continue;
       }
       if (processKilled) {
         process.stdout.write(
           chalk.bgBlue(`! FORCE UNMOUNT: ${item.remote} process killed`)
         );
-        process.stdout.write(`\n`);
+        process.stdout.write(os.EOL);
       }
 
       await unmount(item);
@@ -339,8 +338,8 @@ function validateConfigString(configString) {
 }
 
 function removeTrailingNewline(str) {
-  if (str[str.length - 1] === "\n") {
-    return str.slice(0, str.length - 1);
+  if (str.endsWith(os.EOL)) {
+    return str.slice(0, str.length - os.EOL.length);
   }
   return str;
 }
@@ -354,17 +353,17 @@ async function unmount(data) {
     await execa("fusermount", ["-u", data.local]);
   } catch (err) {
     process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
-    process.stdout.write(`\n`);
+    process.stdout.write(os.EOL);
     process.stdout.write(
       indentString(removeTrailingNewline(err.toString()), 4)
     );
-    process.stdout.write(`\n`);
+    process.stdout.write(os.EOL);
 
     return false;
   }
 
   process.stdout.write(chalk.blue(`- Unmounted: ${data.remote}`));
-  process.stdout.write(`\n`);
+  process.stdout.write(os.EOL);
 
   return true;
 }
