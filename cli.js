@@ -2,7 +2,9 @@
 
 /*
   TODO
+    add support for spacer
     replace mkdir and rm with fs.xxx
+    finish remaining todos
     rename?
     docs
       unify description in meow readme and package.json
@@ -172,7 +174,7 @@ async function promptSshfs(config) {
 
   const selectedUrls = response.urls;
 
-  // mount selected items that are not already mounted
+  // Mount selected items that are not already mounted.
   const mountItems = selectedUrls
     .map(url => destinations.find(item => item.name === url))
     .filter(item => !isMountedWithMount(mounted, item.remote, item.local));
@@ -205,7 +207,7 @@ async function promptSshfs(config) {
     stdoutMounted(mountItem.remote);
   }
 
-  // unmount items that have been unselected
+  // Unmount items that have been unselected.
   const unmountItems = destinations
     .filter(item => !selectedUrls.includes(item.name))
     .filter(item => isMountedWithMount(mounted, item.remote, item.local));
@@ -218,6 +220,7 @@ async function promptSshfs(config) {
     }
   }
 
+  // Force unmount.
   if (unmountErrors.length > 0) {
     const forceUnmountChoices = unmountErrors.map(choice => {
       choice.checked = false;
