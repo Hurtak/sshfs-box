@@ -40,8 +40,4 @@
 
 ## Screenshots
 
-![Preview of sshfs-box interface](img.png)
-
-## TODO
-
-- gifs
+![Preview of sshfs-box interface](img/img.png)
