@@ -2,7 +2,7 @@
 
 /*
   TODO
-    print processRow when killing
+    replace mkdir and rm with fs.xxx
     rename?
     docs
       unify description in meow readme and package.json
@@ -25,6 +25,7 @@ const indentString = require("indent-string");
 
 const configDir = path.join(os.homedir(), ".config");
 const configPath = path.join(configDir, "sshfs-box.json");
+const promptPageSize = 12; // https://github.com/SBoudrias/Inquirer.js/#question
 
 // CLI
 
@@ -55,8 +56,8 @@ async function main() {
   try {
     configString = fs.readFileSync(configPath, "utf8");
   } catch (e) {
+    stdoutNewline(1);
     stdout(`Can't open config on ${configPath}, creating new config`);
-    stdoutNewline(2);
     const config = await promptEditConfig();
     await promptSshfs(config);
     return;
@@ -70,6 +71,7 @@ async function main() {
     if (configValid) {
       await promptSshfs(JSON.parse(configString));
     } else {
+      stdoutNewline(1);
       stdoutError({
         title: `${
           configPath
@@ -77,13 +79,10 @@ async function main() {
         err: errorMessage,
       });
 
-      stdoutNewline(2);
       const config = await promptEditConfig(configString);
       await promptSshfs(config);
     }
   }
-
-  stdoutNewline(1);
 }
 
 main(); // Start the app.
@@ -144,7 +143,7 @@ async function promptSshfs(config) {
 
   const mounted = mountStr.stdout.split(os.EOL);
 
-  const data = config.urls.map(remote => {
+  const destinations = config.urls.map(remote => {
     // user@host:/dir/subdir => user@host--dir-subdir
     const local = path.join(
       config.folder,
@@ -166,13 +165,16 @@ async function promptSshfs(config) {
     type: "checkbox",
     message: "SSHFS mount/unmount dirs",
     name: "urls",
-    choices: data,
+    choices: destinations,
+    pageSize: promptPageSize,
   });
+  stdoutNewline(1);
+
   const selectedUrls = response.urls;
 
   // mount selected items that are not already mounted
   const mountItems = selectedUrls
-    .map(url => data.find(item => item.name === url))
+    .map(url => destinations.find(item => item.name === url))
     .filter(item => !isMountedWithMount(mounted, item.remote, item.local));
 
   for (const mountItem of mountItems) {
@@ -194,7 +196,7 @@ async function promptSshfs(config) {
     } catch (err) {
       stdoutError({
         title: mountItem.remote,
-        description: `Error while mounting "${mountItem.name}"`,
+        description: `Error while mounting`,
         err: err,
       });
       continue;
@@ -204,20 +206,16 @@ async function promptSshfs(config) {
   }
 
   // unmount items that have been unselected
-  const unmountItems = data
+  const unmountItems = destinations
     .filter(item => !selectedUrls.includes(item.name))
     .filter(item => isMountedWithMount(mounted, item.remote, item.local));
   let unmountErrors = [];
-  for (const data of unmountItems) {
-    const unmountSuccesful = await unmount(data);
+  for (const item of unmountItems) {
+    const unmountSuccesful = await unmount(item);
     if (!unmountSuccesful) {
-      unmountErrors.push(data);
+      unmountErrors.push(item);
       continue;
     }
-
-    // TODO async
-    // TODO error handling
-    execa.sync("rm", ["-r", data.local]);
   }
 
   if (unmountErrors.length > 0) {
@@ -233,11 +231,14 @@ async function promptSshfs(config) {
         "There were poblems with unmomunting, force unmount by killing SSHFS process?",
       name: "urls",
       choices: forceUnmountChoices,
+      pageSize: promptPageSize,
     });
+    stdoutNewline(1);
+
     const forceUnmountUrls = answer.urls;
 
     const forceUnmountItems = forceUnmountUrls.map(url =>
-      data.find(item => item.name === url)
+      destinations.find(item => item.name === url)
     );
 
     let responsePsx = null;
@@ -271,9 +272,9 @@ async function promptSshfs(config) {
         continue;
       }
       const pidMatches = processRow.match(/^\s*\d+/);
-      const pid = pidMatches.length > 0 ? pidMatches[0] : null;
+      const processId = pidMatches.length > 0 ? pidMatches[0] : null;
 
-      if (!pid) {
+      if (!processId) {
         stdoutError({
           title: item.remote,
           description: `Unable to parse SSHFS process id`,
@@ -283,19 +284,18 @@ async function promptSshfs(config) {
 
       let processKilled = false;
       try {
-        await execa("kill", ["-9", pid]);
+        await execa("kill", ["-9", processId]);
         processKilled = true;
       } catch (err) {
         stdoutError({
           title: item.remote,
-          description: `Unable to kill SSHFS process with id "${pid}"`,
+          description: `Unable to kill SSHFS process with id "${processId}"`,
           err: err,
         });
         continue;
       }
       if (processKilled) {
-        // console.log(processRow);
-        stdoutUnmountForce(item.remote);
+        stdoutUnmountForce(item.remote, processId);
       }
 
       await unmount(item);
@@ -318,6 +318,10 @@ async function unmount(item) {
     });
     return false;
   }
+
+  // TODO async
+  // TODO error handling
+  execa.sync("rm", ["-r", item.local]);
 
   stdoutUnmounted(item.remote);
   return true;
@@ -348,9 +352,9 @@ function validateConfigString(configString) {
   return [true, null];
 }
 
-function removeTrailingNewline(str) {
-  if (str.endsWith(os.EOL)) {
-    return str.slice(0, str.length - os.EOL.length);
+function removeTrailingNewlines(str) {
+  while (str.endsWith(os.EOL)) {
+    str = str.slice(0, str.length - os.EOL.length);
   }
   return str;
 }
@@ -360,38 +364,39 @@ function stdout(input) {
 }
 
 function stdoutError({ title, description, err }) {
-  stdoutNewline(1);
   stdout(chalk.bgRed(`[ERROR] ${title}`));
+  stdoutNewline(1);
 
   if (description) {
-    stdoutNewline(1);
     stdout(indentString(description, 4));
+    stdoutNewline(1);
   }
 
   if (err) {
-    stdoutNewline(1);
-
     let errFormatted = err;
     errFormatted = String(errFormatted);
-    errFormatted = removeTrailingNewline(errFormatted);
+    errFormatted = removeTrailingNewlines(errFormatted);
     errFormatted = indentString(errFormatted, 4);
     stdout(errFormatted);
+    stdoutNewline(1);
   }
 }
 
 function stdoutMounted(input) {
-  stdoutNewline(1);
   stdout(chalk.green(`[MOUNTED] ${input}`));
+  stdoutNewline(1);
 }
 
 function stdoutUnmounted(input) {
-  stdoutNewline(1);
   stdout(chalk.blue(`[UNMOUNTED]: ${input}`));
+  stdoutNewline(1);
 }
 
-function stdoutUnmountForce(input) {
-  stdoutNewline(1);
+function stdoutUnmountForce(input, precessId) {
   stdout(chalk.bgBlue(`[SSHFS PROCESS KILLED]: ${input}`));
+  stdoutNewline(1);
+  stdout(indentString(`Killed process with id "${precessId}"`, 4));
+  stdoutNewline(1);
 }
 
 function stdoutNewline(number = 1) {

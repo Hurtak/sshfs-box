@@ -45,6 +45,10 @@
 }
 ```
 
+## Force unmout
+
+- tries to be ndeestructive, only kills processes created with sshfs box
+
 ## Screenshots
 
 ![Preview of sshfs-box interface](img/img.png)
