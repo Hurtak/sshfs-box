@@ -25,7 +25,7 @@ const indentString = require("indent-string");
 
 const configDir = path.join(os.homedir(), ".config");
 const configPath = path.join(configDir, "sshfs-box.json");
-const promptPageSize = 12; // https://github.com/SBoudrias/Inquirer.js/#question
+const promptPageSize = 16; // https://github.com/SBoudrias/Inquirer.js/#question
 
 // CLI
 
