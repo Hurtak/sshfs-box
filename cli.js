@@ -166,11 +166,15 @@ async function promptSshfs(config) {
     .filter(item => !answers.urls.includes(item.name))
     .filter(item => isMounted(item.remote, item.local))
     .forEach(data => {
-      const res = execa.sync("fusermount", ["-u", data.local]);
-      if (res.stderr) {
-        process.stderr.write(res.stderr);
-        process.exit(1);
+      try {
+        execa.sync("fusermount", ["-u", data.local]);
+      } catch (err) {
+        process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+        process.stdout.write(`\n`);
+        process.stdout.write(indentString(err.toString(), 4));
+        return;
       }
+
       execa.sync("rm", ["-r", data.local]);
       process.stdout.write(chalk.blue(`\n- Unmounted: ${data.remote}`));
     });
