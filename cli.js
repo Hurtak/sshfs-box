@@ -8,6 +8,7 @@ const path = require("path");
 const meow = require("meow");
 const chalk = require("chalk");
 const execa = require("execa");
+const indentString = require("indent-string");
 const inquirer = require("inquirer");
 
 // Global variables
@@ -151,12 +152,13 @@ async function promptSshfs(config) {
       try {
         execa.sync("sshfs", [data.remote, data.local]);
       } catch (err) {
-        process.stdout.write(`\n[ ] error   ${data.remote}`);
-        process.stdout.write(`\n${err}`);
+        process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+        process.stdout.write(`\n`);
+        process.stdout.write(indentString(err.toString(), 4));
         return;
       }
 
-      process.stdout.write(`\n[x] mounted   ${data.remote}`);
+      process.stdout.write(chalk.green(`\n+ Mounted:   ${data.remote}`));
     });
 
   // unmount items that have been unselected
@@ -170,7 +172,7 @@ async function promptSshfs(config) {
         process.exit(1);
       }
       execa.sync("rm", ["-r", data.local]);
-      process.stdout.write(`\n[ ] unmounted ${data.remote}`);
+      process.stdout.write(chalk.blue(`\n- Unmounted: ${data.remote}`));
     });
 }
 
