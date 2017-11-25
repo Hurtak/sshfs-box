@@ -19,12 +19,12 @@ const path = require("path");
 const meow = require("meow");
 const chalk = require("chalk");
 const execa = require("execa");
-const indentString = require("indent-string");
 const inquirer = require("inquirer");
+const indentString = require("indent-string");
 
 // Global variables
 
-const configDir = path.join(os.homedir(), "/.config/");
+const configDir = path.join(os.homedir(), ".config");
 const configPath = path.join(configDir, "sshfs-box.json");
 
 // CLI
@@ -89,7 +89,7 @@ async function promptEditConfig(defaultConfigOverride) {
   const defaultConfig = JSON.stringify(
     {
       urls: ["user@host1:", "user@host2:/home/user", "user@host2:/www"],
-      folder: path.join(os.homedir(), "/remote"),
+      folder: path.join(os.homedir(), "remote"),
     },
     null,
     2
@@ -133,9 +133,7 @@ async function promptSshfs(config) {
       )
     );
     process.stdout.write(os.EOL);
-    process.stdout.write(
-      indentString(removeTrailingNewline(err.toString()), 4)
-    );
+    process.stdout.write(stdoutPadding(err.toString()));
     process.stdout.write(os.EOL);
 
     return;
@@ -181,9 +179,7 @@ async function promptSshfs(config) {
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
       process.stdout.write(os.EOL);
-      process.stdout.write(
-        indentString(removeTrailingNewline(err.toString()), 4)
-      );
+      process.stdout.write(stdoutPadding(err.toString()));
       process.stdout.write(os.EOL);
       continue;
     }
@@ -193,9 +189,7 @@ async function promptSshfs(config) {
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
       process.stdout.write(os.EOL);
-      process.stdout.write(
-        indentString(removeTrailingNewline(err.toString()), 4)
-      );
+      process.stdout.write(stdoutPadding(err.toString()));
       process.stdout.write(os.EOL);
       continue;
     }
@@ -245,9 +239,7 @@ async function promptSshfs(config) {
     } catch (err) {
       process.stdout.write(chalk.bgRed(`! ERROR:     Unable to run ps -x`));
       process.stdout.write(os.EOL);
-      process.stdout.write(
-        indentString(removeTrailingNewline(err.toString()), 4)
-      );
+      process.stdout.write(stdoutPadding(err.toString()));
       process.stdout.write(os.EOL);
       return;
     }
@@ -296,9 +288,7 @@ async function promptSshfs(config) {
           )
         );
         process.stdout.write(os.EOL);
-        process.stdout.write(
-          indentString(removeTrailingNewline(err.toString()), 4)
-        );
+        process.stdout.write(stdoutPadding(err.toString()));
         process.stdout.write(os.EOL);
         continue;
       }
@@ -313,6 +303,30 @@ async function promptSshfs(config) {
     }
   }
 }
+
+function isMountedWithMount(mountRows, remote, local) {
+  return mountRows.some(mount => mount.startsWith(remote + " on " + local));
+}
+
+async function unmount(data) {
+  try {
+    await execa("fusermount", ["-u", data.local]);
+  } catch (err) {
+    process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
+    process.stdout.write(os.EOL);
+    process.stdout.write(stdoutPadding(err.toString()));
+    process.stdout.write(os.EOL);
+
+    return false;
+  }
+
+  process.stdout.write(chalk.blue(`- Unmounted: ${data.remote}`));
+  process.stdout.write(os.EOL);
+
+  return true;
+}
+
+// Utility finctions
 
 function validateConfigString(configString) {
   let config;
@@ -344,26 +358,9 @@ function removeTrailingNewline(str) {
   return str;
 }
 
-function isMountedWithMount(mountRows, remote, local) {
-  return mountRows.some(mount => mount.startsWith(remote + " on " + local));
-}
-
-async function unmount(data) {
-  try {
-    await execa("fusermount", ["-u", data.local]);
-  } catch (err) {
-    process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
-    process.stdout.write(os.EOL);
-    process.stdout.write(
-      indentString(removeTrailingNewline(err.toString()), 4)
-    );
-    process.stdout.write(os.EOL);
-
-    return false;
-  }
-
-  process.stdout.write(chalk.blue(`- Unmounted: ${data.remote}`));
-  process.stdout.write(os.EOL);
-
-  return true;
+function stdoutPadding(input) {
+  let res = input;
+  res = removeTrailingNewline(res);
+  res = indentString(res, 4);
+  return res;
 }
