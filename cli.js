@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+/*
+  TODO
+    replace \n with os.newline?
+    stdout helper functions?
+*/
+
 "use strict";
 
 const os = require("os");
@@ -103,7 +109,7 @@ async function promptEditConfig(defaultConfigOverride) {
   try {
     fs.mkdirSync(configDir);
   } catch (e) {
-    // Pass.
+    // TODO.
   }
 
   fs.writeFileSync(configPath, configString, "utf8");
@@ -112,20 +118,17 @@ async function promptEditConfig(defaultConfigOverride) {
 }
 
 async function promptSshfs(config) {
+  // TODO: async
   const mounted = execa.shellSync("mount").stdout.split("\n");
 
-  function isMounted(remote, local) {
-    return mounted.some(mount => mount.startsWith(remote + " on " + local));
-  }
-
   const data = config.urls.map(remote => {
-    // user@host:/dir/dir => user@host--dir-div
+    // user@host:/dir/subdir => user@host--dir-subdir
     const local = path.join(
       config.folder,
       remote.replace(/:/g, "-").replace(/\//g, "-")
     );
 
-    const isChecked = isMounted(remote, local);
+    const isChecked = isMountedWithMount(mounted, remote, local);
 
     return {
       name: `${remote} ↔ ${local}`,
@@ -135,50 +138,157 @@ async function promptSshfs(config) {
     };
   });
 
-  const answers = await inquirer.prompt({
+  const response = await inquirer.prompt({
     type: "checkbox",
     message: "SSHFS mount/unmount dirs",
     name: "urls",
     choices: data,
   });
+  const selectedUrls = response.urls;
+
+  process.stdout.write(`\n`);
 
   // mount selected items that are not already mounted
-  const mountItems = answers.urls
+  const mountItems = selectedUrls
     .map(url => data.find(item => item.name === url))
-    .filter(item => !isMounted(item.remote, item.local));
+    .filter(item => !isMountedWithMount(mounted, item.remote, item.local));
 
   for (const data of mountItems) {
-    execa.sync("mkdir", ["-p", data.local]);
+    try {
+      await execa("mkdir", ["-p", data.local]);
+    } catch (err) {
+      process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
+      process.stdout.write(`\n`);
+      process.stdout.write(
+        indentString(removeTrailingNewline(err.toString()), 4)
+      );
+      process.stdout.write(`\n`);
+      continue;
+    }
 
     try {
       await execa("sshfs", [data.remote, data.local]);
     } catch (err) {
-      process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+      process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
       process.stdout.write(`\n`);
-      process.stdout.write(indentString(err.toString(), 4));
-      return;
+      process.stdout.write(
+        indentString(removeTrailingNewline(err.toString()), 4)
+      );
+      process.stdout.write(`\n`);
+      continue;
     }
 
-    process.stdout.write(chalk.green(`\n+ Mounted:   ${data.remote}`));
+    process.stdout.write(chalk.green(`+ Mounted:   ${data.remote}`));
+    process.stdout.write(`\n`);
   }
 
   // unmount items that have been unselected
   const unmountItems = data
-    .filter(item => !answers.urls.includes(item.name))
-    .filter(item => isMounted(item.remote, item.local));
-
+    .filter(item => !selectedUrls.includes(item.name))
+    .filter(item => isMountedWithMount(mounted, item.remote, item.local));
+  let unmountErrors = [];
   for (const data of unmountItems) {
+    const unmountSuccesful = await unmount(data);
+    if (!unmountSuccesful) {
+      unmountErrors.push(data);
+      continue;
+    }
+
+    // TODO async
+    // TODO error handling
+    execa.sync("rm", ["-r", data.local]);
+  }
+
+  if (unmountErrors.length > 0) {
+    const forceUnmountChoices = unmountErrors.map(choice => {
+      choice.checked = false;
+      return choice;
+    });
+
+    const answer = await inquirer.prompt({
+      type: "checkbox",
+      message: "There were poblems with unmomunting, force unmount?",
+      name: "urls",
+      choices: forceUnmountChoices,
+    });
+    const forceUnmountUrls = answer.urls;
+
+    const forceUnmountItems = forceUnmountUrls.map(url =>
+      data.find(item => item.name === url)
+    );
+
+    let response = null;
     try {
-      await execa("fusermount", ["-u", data.local]);
+      response = await execa("ps", ["-x"]);
     } catch (err) {
-      process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+      process.stdout.write(chalk.bgRed(`! ERROR:     Unable to run ps -x`));
       process.stdout.write(`\n`);
-      process.stdout.write(indentString(err.toString(), 4));
+      process.stdout.write(
+        indentString(removeTrailingNewline(err.toString()), 4)
+      );
+      process.stdout.write(`\n`);
       return;
     }
 
-    execa.sync("rm", ["-r", data.local]);
-    process.stdout.write(chalk.blue(`\n- Unmounted: ${data.remote}`));
+    const processes = response.stdout.split("\n");
+    if (!processes) {
+      process.stdout.write(
+        chalk.bgRed(`! ERROR:     Unable to find any sshfs processes with`)
+      );
+      process.stdout.write(`\n`);
+      return;
+    }
+
+    for (const item of forceUnmountItems) {
+      const processRow = processes.find(row =>
+        row.includes(`sshfs ${item.remote} ${item.local}`)
+      );
+      if (!processRow) {
+        process.stdout.write(
+          chalk.bgRed(`! ERROR:     ${item.remote} Unable to sshfs processes`)
+        );
+        process.stdout.write(`\n`);
+        continue;
+      }
+      const pidMatches = processRow.match(/^\s*\d+/);
+      const pid = pidMatches.length > 0 ? pidMatches[0] : null;
+
+      if (!pid) {
+        process.stdout.write(
+          chalk.bgRed(
+            `! ERROR:     ${item.remote} Unable to parse sshfs processes id`
+          )
+        );
+        process.stdout.write(`\n`);
+        continue;
+      }
+
+      let processKilled = false;
+      try {
+        await execa("kill", ["-9", pid]);
+        processKilled = true;
+      } catch (err) {
+        process.stdout.write(
+          chalk.bgRed(
+            `! ERROR:     ${item.remote} Unable to kill sshfs process`
+          )
+        );
+        process.stdout.write(`\n`);
+        process.stdout.write(
+          indentString(removeTrailingNewline(err.toString()), 4)
+        );
+        process.stdout.write(`\n`);
+        continue;
+      }
+      if (processKilled) {
+        process.stdout.write(
+          chalk.bgBlue(`! FORCE UNMOUNT: ${item.remote} process killed`)
+        );
+        process.stdout.write(`\n`);
+      }
+
+      await unmount(item);
+    }
   }
 }
 
@@ -203,4 +313,35 @@ function validateConfigString(configString) {
   }
 
   return [true, null];
+}
+
+function removeTrailingNewline(str) {
+  if (str[str.length - 1] === "\n") {
+    return str.slice(0, str.length - 1);
+  }
+  return str;
+}
+
+function isMountedWithMount(mountRows, remote, local) {
+  return mountRows.some(mount => mount.startsWith(remote + " on " + local));
+}
+
+async function unmount(data) {
+  try {
+    await execa("fusermount", ["-u", data.local]);
+  } catch (err) {
+    process.stdout.write(chalk.bgRed(`! ERROR:     ${data.remote}`));
+    process.stdout.write(`\n`);
+    process.stdout.write(
+      indentString(removeTrailingNewline(err.toString()), 4)
+    );
+    process.stdout.write(`\n`);
+
+    return false;
+  }
+
+  process.stdout.write(chalk.blue(`- Unmounted: ${data.remote}`));
+  process.stdout.write(`\n`);
+
+  return true;
 }
