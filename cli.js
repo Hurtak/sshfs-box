@@ -47,22 +47,24 @@ async function main() {
     process.stdout.write(
       `Can't open config on ${configPath}, creating new config`
     );
-    await promptEditConfig();
-    await promptSshfs();
+    const config = await promptEditConfig();
+    await promptSshfs(config);
     return;
   }
 
   if (cli.flags.config) {
-    promptEditConfig(configString).then(promptSshfs);
+    const config = await promptEditConfig(configString);
+    await promptSshfs(config);
   } else {
     const [configValid] = validateConfigString(configString);
     if (configValid) {
-      promptSshfs(JSON.parse(configString));
+      await promptSshfs(JSON.parse(configString));
     } else {
       process.stdout.write(
         `${configPath} does not contain valid config, please fix it`
       );
-      promptEditConfig(configString).then(promptSshfs);
+      const config = await promptEditConfig(configString);
+      await promptSshfs(config);
     }
   }
 }
@@ -71,7 +73,7 @@ main(); // Start the app.
 
 // Prompt functions.
 
-function promptEditConfig(defaultConfigOverride) {
+async function promptEditConfig(defaultConfigOverride) {
   const defaultConfig = JSON.stringify(
     {
       urls: ["user@host1:", "user@host2:/home/user", "user@host2:/www"],
@@ -93,22 +95,22 @@ function promptEditConfig(defaultConfigOverride) {
     },
   };
 
-  return inquirer.prompt(promptSettings).then(response => {
-    const configString = response.config;
-    const config = JSON.parse(configString);
-    try {
-      fs.mkdirSync(configDir);
-    } catch (e) {
-      // Pass.
-    }
+  const response = await inquirer.prompt(promptSettings);
 
-    fs.writeFileSync(configPath, configString, "utf8");
+  const configString = response.config;
+  const config = JSON.parse(configString);
+  try {
+    fs.mkdirSync(configDir);
+  } catch (e) {
+    // Pass.
+  }
 
-    return config;
-  });
+  fs.writeFileSync(configPath, configString, "utf8");
+
+  return config;
 }
 
-function promptSshfs(config) {
+async function promptSshfs(config) {
   const mounted = execa.shellSync("mount").stdout.split("\n");
 
   function isMounted(remote, local) {
@@ -132,45 +134,43 @@ function promptSshfs(config) {
     };
   });
 
-  return inquirer
-    .prompt({
-      type: "checkbox",
-      message: "SSHFS mount/unmount dirs",
-      name: "urls",
-      choices: data,
-    })
-    .then(answers => {
-      // mount selected items that are not already mounted
-      answers.urls
-        .map(url => data.find(item => item.name === url))
-        .filter(item => !isMounted(item.remote, item.local))
-        .forEach(data => {
-          execa.sync("mkdir", ["-p", data.local]);
+  const answers = await inquirer.prompt({
+    type: "checkbox",
+    message: "SSHFS mount/unmount dirs",
+    name: "urls",
+    choices: data,
+  });
 
-          try {
-            execa.sync("sshfs", [data.remote, data.local]);
-          } catch (err) {
-            process.stdout.write(`\n[ ] error   ${data.remote}`);
-            process.stdout.write(`\n${err}`);
-            return;
-          }
+  // mount selected items that are not already mounted
+  answers.urls
+    .map(url => data.find(item => item.name === url))
+    .filter(item => !isMounted(item.remote, item.local))
+    .forEach(data => {
+      execa.sync("mkdir", ["-p", data.local]);
 
-          process.stdout.write(`\n[x] mounted   ${data.remote}`);
-        });
+      try {
+        execa.sync("sshfs", [data.remote, data.local]);
+      } catch (err) {
+        process.stdout.write(`\n[ ] error   ${data.remote}`);
+        process.stdout.write(`\n${err}`);
+        return;
+      }
 
-      // unmount items that have been unselected
-      data
-        .filter(item => !answers.urls.includes(item.name))
-        .filter(item => isMounted(item.remote, item.local))
-        .forEach(data => {
-          const res = execa.sync("fusermount", ["-u", data.local]);
-          if (res.stderr) {
-            process.stderr.write(res.stderr);
-            process.exit(1);
-          }
-          execa.sync("rm", ["-r", data.local]);
-          process.stdout.write(`\n[ ] unmounted ${data.remote}`);
-        });
+      process.stdout.write(`\n[x] mounted   ${data.remote}`);
+    });
+
+  // unmount items that have been unselected
+  data
+    .filter(item => !answers.urls.includes(item.name))
+    .filter(item => isMounted(item.remote, item.local))
+    .forEach(data => {
+      const res = execa.sync("fusermount", ["-u", data.local]);
+      if (res.stderr) {
+        process.stderr.write(res.stderr);
+        process.exit(1);
+      }
+      execa.sync("rm", ["-r", data.local]);
+      process.stdout.write(`\n[ ] unmounted ${data.remote}`);
     });
 }
 
