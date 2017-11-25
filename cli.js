@@ -4,6 +4,8 @@
   TODO
     replace \n with os.newline?
     stdout helper functions?
+    newline before each command compared to after?
+    async mounting?
     rename?
     docs
     gifs
@@ -122,8 +124,25 @@ async function promptEditConfig(defaultConfigOverride) {
 }
 
 async function promptSshfs(config) {
-  // TODO: async
-  const mounted = execa.shellSync("mount").stdout.split("\n");
+  let mountStr;
+  try {
+    mountStr = await execa.shellSync("mount");
+  } catch (err) {
+    process.stdout.write(
+      chalk.bgRed(
+        `! ERROR:     Error while getting sshfs mounted folders, exiting`
+      )
+    );
+    process.stdout.write(`\n`);
+    process.stdout.write(
+      indentString(removeTrailingNewline(err.toString()), 4)
+    );
+    process.stdout.write(`\n`);
+
+    return;
+  }
+
+  const mounted = mountStr.stdout.split("\n");
 
   const data = config.urls.map(remote => {
     // user@host:/dir/subdir => user@host--dir-subdir
