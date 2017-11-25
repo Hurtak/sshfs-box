@@ -31,8 +31,8 @@ const cli = meow(
   {
     alias: {
       c: "config",
-      configure: "config"
-    }
+      configure: "config",
+    },
   }
 );
 
@@ -41,14 +41,16 @@ const cli = meow(
 let configString;
 try {
   configString = fs.readFileSync(configPath, "utf8");
-} catch (e) {}
+} catch (e) {
+  // Pass.
+}
 
 if (cli.flags.config) {
   promptEditConfig(configString).then(promptSshfs);
 } else {
   if (configString) {
-    const validation = validateConfigString(configString); // true ok, otherwise returns error string
-    if (validation === true) {
+    const [configValid] = validateConfigString(configString);
+    if (configValid) {
       promptSshfs(JSON.parse(configString));
     } else {
       process.stderr.write(
@@ -82,7 +84,10 @@ function promptEditConfig(defaultConfigOverride) {
     name: "config",
     message: "Configure sshfs-box",
     default: defaultConfigOverride || defaultConfig,
-    validate: validateConfigString
+    validate: userInput => {
+      const [valid, err] = validateConfigString(userInput);
+      return valid ? true : err;
+    },
   };
 
   return inquirer.prompt(promptSettings).then(response => {
@@ -120,7 +125,7 @@ function promptSshfs(config) {
       name: `${remote} ↔ ${local}`,
       checked: isChecked,
       remote: remote,
-      local: local
+      local: local,
     };
   });
 
@@ -129,7 +134,7 @@ function promptSshfs(config) {
       type: "checkbox",
       message: "SSHFS mount/unmount dirs",
       name: "urls",
-      choices: data
+      choices: data,
     })
     .then(answers => {
       // mount selected items that are not already mounted
@@ -167,15 +172,20 @@ function validateConfigString(configString) {
   try {
     config = JSON.parse(configString);
   } catch (e) {
-    return "Error parsing JSON";
+    return [false, "Error parsing JSON"];
   }
 
-  if (!config.urls) return `"urls" field is missing or empty`;
-  if (!Array.isArray(config.urls)) return `"urls" filed is not an array`;
-  if (config.urls.some(item => typeof item !== "string"))
-    return `all fields in "urls" filed need to be string`;
-  if (!config.folder) return `"folder" field is missing or empy`;
-  if (typeof config.folder !== "string") return `"folder" field must be string`;
+  if (!config.urls) {
+    return [false, `"urls" field is missing or empty`];
+  } else if (!Array.isArray(config.urls)) {
+    return [false, `"urls" filed is not an array`];
+  } else if (config.urls.some(item => typeof item !== "string")) {
+    return [false, `all fields in "urls" filed need to be string`];
+  } else if (!config.folder) {
+    return [false, `"folder" field is missing or empy`];
+  } else if (typeof config.folder !== "string") {
+    return [false, `"folder" field must be string`];
+  }
 
-  return true;
+  return [true, null];
 }
