@@ -143,41 +143,43 @@ async function promptSshfs(config) {
   });
 
   // mount selected items that are not already mounted
-  answers.urls
+  const mountItems = answers.urls
     .map(url => data.find(item => item.name === url))
-    .filter(item => !isMounted(item.remote, item.local))
-    .forEach(data => {
-      execa.sync("mkdir", ["-p", data.local]);
+    .filter(item => !isMounted(item.remote, item.local));
 
-      try {
-        execa.sync("sshfs", [data.remote, data.local]);
-      } catch (err) {
-        process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
-        process.stdout.write(`\n`);
-        process.stdout.write(indentString(err.toString(), 4));
-        return;
-      }
+  for (const data of mountItems) {
+    execa.sync("mkdir", ["-p", data.local]);
 
-      process.stdout.write(chalk.green(`\n+ Mounted:   ${data.remote}`));
-    });
+    try {
+      await execa("sshfs", [data.remote, data.local]);
+    } catch (err) {
+      process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+      process.stdout.write(`\n`);
+      process.stdout.write(indentString(err.toString(), 4));
+      return;
+    }
+
+    process.stdout.write(chalk.green(`\n+ Mounted:   ${data.remote}`));
+  }
 
   // unmount items that have been unselected
-  data
+  const unmountItems = data
     .filter(item => !answers.urls.includes(item.name))
-    .filter(item => isMounted(item.remote, item.local))
-    .forEach(data => {
-      try {
-        execa.sync("fusermount", ["-u", data.local]);
-      } catch (err) {
-        process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
-        process.stdout.write(`\n`);
-        process.stdout.write(indentString(err.toString(), 4));
-        return;
-      }
+    .filter(item => isMounted(item.remote, item.local));
 
-      execa.sync("rm", ["-r", data.local]);
-      process.stdout.write(chalk.blue(`\n- Unmounted: ${data.remote}`));
-    });
+  for (const data of unmountItems) {
+    try {
+      await execa("fusermount", ["-u", data.local]);
+    } catch (err) {
+      process.stdout.write(chalk.bgRed(`\n! ERROR:     ${data.remote}`));
+      process.stdout.write(`\n`);
+      process.stdout.write(indentString(err.toString(), 4));
+      return;
+    }
+
+    execa.sync("rm", ["-r", data.local]);
+    process.stdout.write(chalk.blue(`\n- Unmounted: ${data.remote}`));
+  }
 }
 
 function validateConfigString(configString) {
