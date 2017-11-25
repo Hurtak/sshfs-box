@@ -19,9 +19,9 @@
     "sftp"
   ],
   "dependencies": {
-    "dedent": "^0.7.0",
+    "chalk": "^2.3.0",
     "execa": "^0.8.0",
-    "inquirer": "^3.3.0",
+    "inquirer": "^4.0.0",
     "meow": "^3.7.0"
   }
 }

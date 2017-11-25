@@ -6,8 +6,8 @@ const os = require("os");
 const fs = require("fs");
 const path = require("path");
 const meow = require("meow");
+const chalk = require("chalk");
 const execa = require("execa");
-const dedent = require("dedent");
 const inquirer = require("inquirer");
 
 // Global variables
@@ -19,65 +19,67 @@ const configPath = path.join(configDir, "sshfs-box.json");
 
 const cli = meow(
   `
-  Small CLI tool to simply mount/unmount remote sshfs directories
+  Small CLI tool to mount/unmount directories on remote servers with sshfs.
 
   Usage
     $ sshfs-box
 
   Options
-    --config, -c  Configure remote & local paths to connect
+    --config, -c  Configure remote & local paths
                   Config stored in ~/.config/sshfs-box.json
 `,
   {
     alias: {
       c: "config",
       configure: "config",
+      settings: "config",
     },
   }
 );
 
 // Main
 
-let configString;
-try {
-  configString = fs.readFileSync(configPath, "utf8");
-} catch (e) {
-  // Pass.
-}
+async function main() {
+  let configString;
+  try {
+    configString = fs.readFileSync(configPath, "utf8");
+  } catch (e) {
+    process.stdout.write(
+      `Can't open config on ${configPath}, creating new config`
+    );
+    await promptEditConfig();
+    await promptSshfs();
+    return;
+  }
 
-if (cli.flags.config) {
-  promptEditConfig(configString).then(promptSshfs);
-} else {
-  if (configString) {
+  if (cli.flags.config) {
+    promptEditConfig(configString).then(promptSshfs);
+  } else {
     const [configValid] = validateConfigString(configString);
     if (configValid) {
       promptSshfs(JSON.parse(configString));
     } else {
-      process.stderr.write(
+      process.stdout.write(
         `${configPath} does not contain valid config, please fix it`
       );
       promptEditConfig(configString).then(promptSshfs);
     }
-  } else {
-    process.stderr.write(
-      `Cant open config on ${configPath}, creating new config`
-    );
-    promptEditConfig().then(promptSshfs);
   }
 }
 
-// Prompt functions
+main(); // Start the app.
+
+// Prompt functions.
 
 function promptEditConfig(defaultConfigOverride) {
-  const defaultConfig = dedent`
+  const defaultConfig = JSON.stringify(
     {
-      "urls": [
-        "user@host1:dir",
-        "user@host2:dir"
-      ],
-      "folder": "${path.join(os.homedir(), "/remote")}"
-    }
-  `;
+      urls: ["user@host1:", "user@host2:/home/user", "user@host2:/www"],
+      folder: path.join(os.homedir(), "/remote"),
+    },
+    null,
+    2
+  );
 
   const promptSettings = {
     type: "editor",
@@ -86,6 +88,7 @@ function promptEditConfig(defaultConfigOverride) {
     default: defaultConfigOverride || defaultConfig,
     validate: userInput => {
       const [valid, err] = validateConfigString(userInput);
+      // Inquirer expects true if input is valid, otherwise string error message.
       return valid ? true : err;
     },
   };
@@ -96,7 +99,7 @@ function promptEditConfig(defaultConfigOverride) {
     try {
       fs.mkdirSync(configDir);
     } catch (e) {
-      // pass
+      // Pass.
     }
 
     fs.writeFileSync(configPath, configString, "utf8");
@@ -129,7 +132,7 @@ function promptSshfs(config) {
     };
   });
 
-  inquirer
+  return inquirer
     .prompt({
       type: "checkbox",
       message: "SSHFS mount/unmount dirs",
@@ -143,17 +146,21 @@ function promptSshfs(config) {
         .filter(item => !isMounted(item.remote, item.local))
         .forEach(data => {
           execa.sync("mkdir", ["-p", data.local]);
-          const { stderr } = execa.sync("sshfs", [data.remote, data.local]);
-          if (stderr) {
-            process.stderr.write(stderr);
-            process.exit(1);
+
+          try {
+            execa.sync("sshfs", [data.remote, data.local]);
+          } catch (err) {
+            process.stdout.write(`\n[ ] error   ${data.remote}`);
+            process.stdout.write(`\n${err}`);
+            return;
           }
-          process.stdout.write(`[x] mounted   ${data.remote}`);
+
+          process.stdout.write(`\n[x] mounted   ${data.remote}`);
         });
 
       // unmount items that have been unselected
       data
-        .filter(item => answers.urls.includes(item.name) === false)
+        .filter(item => !answers.urls.includes(item.name))
         .filter(item => isMounted(item.remote, item.local))
         .forEach(data => {
           const res = execa.sync("fusermount", ["-u", data.local]);
@@ -162,7 +169,7 @@ function promptSshfs(config) {
             process.exit(1);
           }
           execa.sync("rm", ["-r", data.local]);
-          process.stdout.write(`[ ] unmounted ${data.remote}`);
+          process.stdout.write(`\n[ ] unmounted ${data.remote}`);
         });
     });
 }
