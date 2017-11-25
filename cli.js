@@ -4,6 +4,10 @@
   TODO
     replace \n with os.newline?
     stdout helper functions?
+    rename?
+    docs
+    gifs
+    twitter
 */
 
 "use strict";
