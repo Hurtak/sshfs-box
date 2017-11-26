@@ -41,7 +41,9 @@ const cli = meow(
   }
 );
 
+//
 // Main
+//
 
 async function main() {
   let configString;
@@ -62,13 +64,14 @@ async function main() {
   } else {
     const [configValid, errorMessage] = validateConfigString(configString);
     if (configValid) {
-      await promptSshfs(JSON.parse(configString));
+      const config = JSON.parse(configString);
+      await promptSshfs(config);
     } else {
       stdoutNewline(1);
       stdoutError({
-        title: `${
+        title: `"${
           configPath
-        } does not contain valid config, opening editor so you can fix it`,
+        }" does not contain valid config, opening editor so you can fix it`,
         err: errorMessage,
       });
 
@@ -80,7 +83,9 @@ async function main() {
 
 main(); // Start the app.
 
+//
 // Prompt functions.
+//
 
 async function promptEditConfig(defaultConfigOverride) {
   const defaultConfig = JSON.stringify(
@@ -334,7 +339,9 @@ async function unmount(item) {
   return true;
 }
 
+//
 // Utility functions
+//
 
 function validateConfigString(configString) {
   let config;
