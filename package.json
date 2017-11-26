@@ -21,6 +21,7 @@
   "dependencies": {
     "chalk": "2.3.0",
     "execa": "0.8.0",
+    "fs-extra": "4.0.2",
     "indent-string": "3.2.0",
     "inquirer": "4.0.0",
     "meow": "3.7.0"

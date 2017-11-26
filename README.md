@@ -4,18 +4,19 @@
 
 ## Prerequisites
 
-- dependencies
+- Dependencies
     - `node.js` >= 8
-    - commands used under the hood that your system needs to support:
+    - commands used under the hood that your operating system needs to support:
         - `sshfs`
         - `fusermount`
         - `mount`
         - `ps`
+        - `kill`
     - `npm` to install
 
-- operating system
+- Supported operating systems
     - Ubuntu - tested, works
-    - MacOs - tested on older versions, should work
+    - MacOs - tested on older versions of sshfs-box, should work
 
 ## Install
 
@@ -55,4 +56,5 @@
 
 ## Potential improvements
 
-- mounting/unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.
+- Mounting/Unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.
+- Add support for separator - https://github.com/SBoudrias/Inquirer.js/#separator.

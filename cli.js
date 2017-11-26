@@ -2,10 +2,9 @@
 
 /*
   TODO
-    add support for spacer
-    replace mkdir and rm with fs.xxx
-    finish remaining todos
     rename?
+    update meow
+      https://github.com/sindresorhus/meow/releases/tag/v4.0.0
     docs
       unify description in meow readme and package.json
     gifs
@@ -15,7 +14,7 @@
 "use strict";
 
 const os = require("os");
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
 const meow = require("meow");
 const chalk = require("chalk");
@@ -56,10 +55,11 @@ const cli = meow(
 async function main() {
   let configString;
   try {
-    configString = fs.readFileSync(configPath, "utf8");
+    configString = await fs.readFile(configPath, "utf8");
   } catch (e) {
     stdoutNewline(1);
-    stdout(`Can't open config on ${configPath}, creating new config`);
+    stdout(`Can't find config "${configPath}", creating new config`);
+    stdoutNewline(1);
     const config = await promptEditConfig();
     await promptSshfs(config);
     return;
@@ -118,13 +118,20 @@ async function promptEditConfig(defaultConfigOverride) {
 
   const configString = response.config;
   const config = JSON.parse(configString);
+
   try {
-    fs.mkdirSync(configDir);
-  } catch (e) {
-    // TODO.
+    await fs.outputFile(configPath, configString, "utf8");
+  } catch (err) {
+    stdoutError({
+      title: `Unable to write config file "${configPath}"`,
+      err: err,
+    });
+    process.exit(1);
   }
 
-  fs.writeFileSync(configPath, configString, "utf8");
+  stdoutNewline(1);
+  stdout(`Config succesfully saved to "${configPath}"`);
+  stdoutNewline(1);
 
   return config;
 }
@@ -139,8 +146,7 @@ async function promptSshfs(config) {
       err: err,
     });
     stdoutNewline(1);
-
-    return;
+    process.exit(1);
   }
 
   const mounted = mountStr.stdout.split(os.EOL);
@@ -181,7 +187,7 @@ async function promptSshfs(config) {
 
   for (const mountItem of mountItems) {
     try {
-      await execa("mkdir", ["-p", mountItem.local]);
+      await fs.ensureDir(mountItem.local);
     } catch (err) {
       stdoutError({
         title: mountItem.remote,
@@ -321,12 +327,18 @@ async function unmount(item) {
     });
     return false;
   }
-
-  // TODO async
-  // TODO error handling
-  execa.sync("rm", ["-r", item.local]);
-
   stdoutUnmounted(item.remote);
+
+  try {
+    await fs.rmdir(item.local);
+  } catch (err) {
+    stdoutError({
+      title: item.remote,
+      description: `Unable to remove directory ${item.local}`,
+      err: err,
+    });
+  }
+
   return true;
 }
 
