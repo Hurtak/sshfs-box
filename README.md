@@ -6,9 +6,9 @@ CLI tool to manage remote directories with SSHFS.
 
 ## Prerequisites
 
-- Dependencies
+- Dependencies:
     - `node.js` >= 8
-    - commands used under the hood that your operating system needs to support:
+    - Commands used under the hood that your operating system needs to support:
         - `sshfs`
         - `fusermount`
         - `mount`
@@ -17,8 +17,8 @@ CLI tool to manage remote directories with SSHFS.
     - `npm` to install
 
 - Supported operating systems
-    - Ubuntu - tested, works
-    - MacOs - tested on older versions of sshfs-box, should work
+    - Ubuntu &ndash; tested, works
+    - MacOs &ndash; tested on older versions of sshfs-box, should work
 
 ## Install
 
@@ -27,26 +27,40 @@ CLI tool to manage remote directories with SSHFS.
 ## Usage
 
 - `sshfs-box`
-    - starts the interface for mounting/unmounting
-    - when run for the first time, it will prompt to create new config
-- `sshfs-box --config`
-    - configure remote & local paths to connect
-    - config is stored in ~/.config/sshfs-box.json
+    - Starts the interface for mounting/unmounting.
+    - When run for the first time, it will prompt to create new config.
+- `sshfs-box --config` or `sshfs-box -c`
+    - Configure remote & local paths to connect.
+- `sshfs-box --help`
+    - Displays avaliable CLI commands.
 
 ### Configuration
 
-- `urls` array of strings of remote locations where sshfs-box will try to connect
-- `folder` string of local folder where remote locations will be mounted (does not need to exist)
+- Configuration is displayed when sshfs-box app is run for the first time or when passing the `--config` flag.
+- Config is stored in `~/.config/sshfs-box.json`.
+
+#### Config example
 
 ```json
 {
-    "urls": [
-        "user@host1:dir",
-        "user@host2:dir"
+    urls: [
+        "username@host1:",
+        "username@host2:/home/user",
+        "username@host2:/www"
     ],
     "folder": "/home/username/remote"
-}
+},
 ```
+
+### Config fields
+
+- `urls`
+    - `Required` field
+    - `Array` of strings of remote locations that sshfs-box will try to with SSHFS.
+- `folder`
+    - `Required` field
+    - `String` of local folder where remote locations will be mounted.
+    - If folder does not exist, it will be created automatically.
 
 ## Force unmout
 
@@ -63,7 +77,7 @@ CLI tool to manage remote directories with SSHFS.
 
 ## TODO
 
-- docs
 - gifs
+- run through Grammarly
 - test properly
 - mention on twitter
