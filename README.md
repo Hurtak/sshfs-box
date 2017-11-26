@@ -77,9 +77,3 @@ CLI tool to manage remote directories with SSHFS.
 
 - Mounting/Unmounting of multiple locations is currently done synchronously, maybe we could parallelize if performance is a problem.
 - Add support for separator - https://github.com/SBoudrias/Inquirer.js/#separator.
-
-## TODO
-
-- run through Grammarly
-- test properly
-- mention on twitter
