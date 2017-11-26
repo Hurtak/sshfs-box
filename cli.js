@@ -1,16 +1,5 @@
 #!/usr/bin/env node
 
-/*
-  TODO
-    rename?
-    update meow
-      https://github.com/sindresorhus/meow/releases/tag/v4.0.0
-    docs
-      unify description in meow readme and package.json
-    gifs
-    mention on twitter
-*/
-
 "use strict";
 
 const os = require("os");

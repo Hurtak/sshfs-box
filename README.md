@@ -1,6 +1,8 @@
 # SSHFS box
 
-- Small CLI tool to simply mount/unmount remote sshfs directories
+<img src="img/icon.png" width="64" height="64">
+
+Small CLI tool to simply mount/unmount remote sshfs directories
 
 ## Prerequisites
 
@@ -58,3 +60,14 @@
 
 - Mounting/Unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.
 - Add support for separator - https://github.com/SBoudrias/Inquirer.js/#separator.
+
+## TODO
+
+- rename?
+- update meow
+    - https://github.com/sindresorhus/meow/releases/tag/v4.0.0
+- docs
+- unify description in meow readme and package.json
+- gifs
+- test properly
+- mention on twitter
