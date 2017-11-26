@@ -18,18 +18,17 @@ CLI tool to manage remote directories with SSHFS.
 ## Prerequisites
 
 - Dependencies:
-    - `node.js` >= 8
+    - `node.js` >= 8.
     - Commands used under the hood that your operating system needs to support:
         - `sshfs`
         - `fusermount`
         - `mount`
         - `ps`
         - `kill`
-    - `npm` to install
-
-- Supported operating systems
-    - Ubuntu &ndash; tested, works
-    - MacOs &ndash; tested on older versions of sshfs-box, should work
+    - `npm` to install.
+- Supported operating systems:
+    - Ubuntu &ndash; tested, works.
+    - MacOs &ndash; tested on older versions of sshfs-box, should work.
 
 ## Install
 
@@ -47,14 +46,14 @@ CLI tool to manage remote directories with SSHFS.
 
 ### Configuration
 
-- Configuration is displayed when sshfs-box app is run for the first time or when passing the `--config` flag.
+- Configuration prompt is displayed when sshfs-box is run for the first time or when passing the `--config` flag.
 - Config is stored in `~/.config/sshfs-box.json`.
 
 #### Config example
 
 ```json
 {
-    urls: [
+    "urls": [
         "username@host1:",
         "username@host2:/home/user",
         "username@host2:/www"
@@ -72,7 +71,7 @@ CLI tool to manage remote directories with SSHFS.
     - `Required` field.
     - `String` of the local folder where remote locations will be mounted.
     - If the folder does not exist, it will be created automatically.
-- With the given example config `username@host:/dir/subdir` will be avaliable in `/home/username/remote/username@host:-dir-subdir`.
+- With the given example config `username@host:/dir/subdir` will be avaliable in `/home/username/remote/username@host:-dir-subdir` after mounting.
 
 ## Potential improvements
 
