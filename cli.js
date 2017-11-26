@@ -9,6 +9,7 @@ const meow = require("meow");
 const chalk = require("chalk");
 const execa = require("execa");
 const inquirer = require("inquirer");
+const isInvalidPath = require("is-invalid-path");
 const indentString = require("indent-string");
 
 // Global variables
@@ -84,7 +85,11 @@ main(); // Start the app.
 async function promptEditConfig(defaultConfigOverride) {
   const defaultConfig = JSON.stringify(
     {
-      urls: ["user@host1:", "user@host2:/home/user", "user@host2:/www"],
+      urls: [
+        "username@host1:",
+        "username@host2:/home/username",
+        "username@host2:/www",
+      ],
       folder: path.join(os.homedir(), "remote"),
     },
     null,
@@ -142,11 +147,8 @@ async function promptSshfs(config) {
   const mounted = mountStr.stdout.split(os.EOL);
 
   const destinations = config.urls.map(remote => {
-    // user@host:/dir/subdir => user@host--dir-subdir
-    const local = path.join(
-      config.folder,
-      remote.replace(/:/g, "-").replace(/\//g, "-")
-    );
+    // username@host:/dir/subdir => username@host:-dir-subdir
+    const local = path.join(config.folder, remote.replace(/[/]/g, "-"));
 
     const isChecked = isMountedWithMount(mounted, remote, local);
 
@@ -346,12 +348,19 @@ function validateConfigString(configString) {
     return [false, `The "urls" field is missing or empty`];
   } else if (!Array.isArray(config.urls)) {
     return [false, `The "urls" filed is not an array`];
-  } else if (config.urls.some(item => typeof item !== "string")) {
-    return [false, `All fields in "urls" filed need to be string`];
+  } else if (!config.urls.every(item => typeof item === "string")) {
+    return [false, `All items in "urls" filed need to be string`];
+  }
+
+  const invalidPathInUrls = config.urls.find(path => isInvalidPath(path));
+  if (invalidPathInUrls) {
+    return [false, `"${invalidPathInUrls}" is not a valid path`];
   } else if (!config.folder) {
     return [false, `The "folder" field is missing or empy`];
   } else if (typeof config.folder !== "string") {
     return [false, `The "folder" field must be string`];
+  } else if (isInvalidPath(config.folder)) {
+    return [false, `The "folder" field does not contain a valid path`];
   }
 
   return [true, null];

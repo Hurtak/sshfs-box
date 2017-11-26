@@ -24,6 +24,7 @@
     "fs-extra": "4.0.2",
     "indent-string": "3.2.0",
     "inquirer": "4.0.0",
+    "is-invalid-path": "0.1.0",
     "meow": "4.0.0"
   }
 }
