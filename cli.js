@@ -21,7 +21,7 @@ const promptPageSize = 16; // https://github.com/SBoudrias/Inquirer.js/#question
 
 const cli = meow(
   `
-  Small CLI tool to mount/unmount directories remote servers with SSHFS.
+  CLI tool to manage remote directories with SSHFS.
 
   Usage
     $ sshfs-box

@@ -2,7 +2,7 @@
 
 <img src="img/icon.png" width="64" height="64">
 
-Small CLI tool to simply mount/unmount remote sshfs directories
+CLI tool to manage remote directories with SSHFS.
 
 ## Prerequisites
 
@@ -67,7 +67,6 @@ Small CLI tool to simply mount/unmount remote sshfs directories
 - update meow
     - https://github.com/sindresorhus/meow/releases/tag/v4.0.0
 - docs
-- unify description in meow readme and package.json
 - gifs
 - test properly
 - mention on twitter

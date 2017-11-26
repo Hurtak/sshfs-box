@@ -1,7 +1,7 @@
 {
   "name": "sshfs-box",
   "version": "4.0.1",
-  "description": "Small CLI tool to simply mount/unmount remote sshfs directories",
+  "description": "CLI tool to manage remote directories with SSHFS",
   "license": "MIT",
   "repository": "hurtak/sshfs-box",
   "author": {
