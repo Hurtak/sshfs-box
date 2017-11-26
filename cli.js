@@ -402,12 +402,12 @@ function stdoutMounted(input) {
 }
 
 function stdoutUnmounted(input) {
-  stdout(chalk.blue(`[UNMOUNTED]: ${input}`));
+  stdout(chalk.blue(`[UNMOUNTED] ${input}`));
   stdoutNewline(1);
 }
 
 function stdoutUnmountForce(input, precessId) {
-  stdout(chalk.bgBlue(`[SSHFS PROCESS KILLED]: ${input}`));
+  stdout(chalk.bgBlue(`[SSHFS PROCESS KILLED] ${input}`));
   stdoutNewline(1);
   stdout(indentString(`Killed process with id "${precessId}"`, 4));
   stdoutNewline(1);
