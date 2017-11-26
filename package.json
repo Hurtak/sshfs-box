@@ -1,6 +1,6 @@
 {
   "name": "sshfs-box",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "CLI tool to manage remote directories with SSHFS",
   "license": "MIT",
   "repository": "hurtak/sshfs-box",
