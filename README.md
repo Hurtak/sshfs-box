@@ -6,9 +6,14 @@ CLI tool to manage remote directories with SSHFS.
 
 ## Features
 
-- One config file to manage all of your sshfs remote directories.
+- One tool to manage all of your sshfs remote directories.
+
+<img src="img/docs-1.png" style="width: 100%">
+
 - Great error messages telling you exactly what went wrong.
 - Error recovery, in case there is any broken hanging sshfs proceses, sshfs-box will give you option to kill them.
+
+<img src="img/docs-2.png" style="width: 100%">
 
 ## Prerequisites
 
@@ -68,10 +73,6 @@ CLI tool to manage remote directories with SSHFS.
     - `String` of local folder where remote locations will be mounted.
     - If folder does not exist, it will be created automatically.
 
-## Screenshots
-
-![Preview of sshfs-box interface](img/img.png)
-
 ## Potential improvements
 
 - Mounting/Unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.
@@ -79,7 +80,6 @@ CLI tool to manage remote directories with SSHFS.
 
 ## TODO
 
-- gifs
 - run through Grammarly
 - test properly
 - mention on twitter
