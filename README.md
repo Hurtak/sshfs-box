@@ -6,12 +6,12 @@ CLI tool to manage remote directories with SSHFS.
 
 ## Features
 
-- One tool to manage all of your sshfs remote directories.
+- One tool to manage all of your SSHFS remote directories.
 
 <img src="img/docs-1.png" style="width: 100%">
 
-- Great error messages telling you exactly what went wrong.
-- Error recovery, in case there is any broken hanging sshfs proceses, sshfs-box will give you option to kill them.
+- Great error messages that will tell you exactly what went wrong.
+- Error recovery, in case there is any broken hanging SSHFS processes, sshfs-box will give you option to kill them.
 
 <img src="img/docs-2.png" style="width: 100%">
 
@@ -39,11 +39,11 @@ CLI tool to manage remote directories with SSHFS.
 
 - `sshfs-box`
     - Starts the interface for mounting/unmounting.
-    - When run for the first time, it will prompt to create new config.
+    - When running for the first time, it will prompt to create a new config.
 - `sshfs-box --config` or `sshfs-box -c`
     - Configure remote & local paths to connect.
 - `sshfs-box --help`
-    - Displays avaliable CLI commands.
+    - Displays available CLI commands.
 
 ### Configuration
 
@@ -67,15 +67,15 @@ CLI tool to manage remote directories with SSHFS.
 
 - `urls`
     - `Required` field
-    - `Array` of strings of remote locations that sshfs-box will try to with SSHFS.
+    - `Array` of strings of remote locations that sshfs-box will connect to with SSHFS.
 - `folder`
     - `Required` field
-    - `String` of local folder where remote locations will be mounted.
-    - If folder does not exist, it will be created automatically.
+    - `String` of the local folder where remote locations will be mounted.
+    - If the folder does not exist, it will be created automatically.
 
 ## Potential improvements
 
-- Mounting/Unmounting of multiple locations are currently done in synchronous way, maybe we could pararelize if performance is a problem.
+- Mounting/Unmounting of multiple locations is currently done synchronously, maybe we could parallelize if performance is a problem.
 - Add support for separator - https://github.com/SBoudrias/Inquirer.js/#separator.
 
 ## TODO
