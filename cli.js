@@ -31,10 +31,11 @@ const cli = meow(
                   Config stored in ~/.config/sshfs-box.json
 `,
   {
-    alias: {
-      c: "config",
-      configure: "config",
-      settings: "config",
+    flags: {
+      config: {
+        type: "boolean",
+        alias: ["c", "configure"],
+      },
     },
   }
 );

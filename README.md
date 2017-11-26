@@ -63,9 +63,6 @@ CLI tool to manage remote directories with SSHFS.
 
 ## TODO
 
-- rename?
-- update meow
-    - https://github.com/sindresorhus/meow/releases/tag/v4.0.0
 - docs
 - gifs
 - test properly
