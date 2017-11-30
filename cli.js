@@ -35,9 +35,9 @@ const cli = meow(
     flags: {
       config: {
         type: "boolean",
-        alias: ["c", "configure"],
-      },
-    },
+        alias: ["c", "configure"]
+      }
+    }
   }
 );
 
@@ -72,7 +72,7 @@ async function main() {
         title: `"${
           configPath
         }" does not contain valid config, opening editor so you can fix it`,
-        err: errorMessage,
+        err: errorMessage
       });
 
       const config = await promptEditConfig(configString);
@@ -93,9 +93,9 @@ async function promptEditConfig(defaultConfigOverride) {
       urls: [
         "username@host1:",
         "username@host2:/home/username",
-        "username@host2:/www",
+        "username@host2:/www"
       ],
-      folder: path.join(os.homedir(), "remote"),
+      folder: path.join(os.homedir(), "remote")
     },
     null,
     2
@@ -110,7 +110,7 @@ async function promptEditConfig(defaultConfigOverride) {
       const [valid, err] = validateConfigString(userInput);
       // Inquirer expects true if input is valid, otherwise string error message.
       return valid ? true : err;
-    },
+    }
   };
 
   stdoutNewline(1);
@@ -124,7 +124,7 @@ async function promptEditConfig(defaultConfigOverride) {
   } catch (err) {
     stdoutError({
       title: `Unable to write config file "${configPath}"`,
-      err: err,
+      err: err
     });
     process.exit(1);
   }
@@ -143,7 +143,7 @@ async function promptSshfs(config) {
   } catch (err) {
     stdoutError({
       title: `Error while getting SSHFS mounted folders, exiting`,
-      err: err,
+      err: err
     });
     stdoutNewline(1);
     process.exit(1);
@@ -161,7 +161,7 @@ async function promptSshfs(config) {
       name: `${remote} ↔ ${local}`,
       checked: isChecked,
       remote: remote,
-      local: local,
+      local: local
     };
   });
 
@@ -171,7 +171,7 @@ async function promptSshfs(config) {
     message: "SSHFS mount/unmount dirs",
     name: "urls",
     choices: destinations,
-    pageSize: promptPageSize,
+    pageSize: promptPageSize
   });
   stdoutNewline(1);
 
@@ -191,7 +191,7 @@ async function promptSshfs(config) {
         description: `Error while creating local directory "${
           mountItem.local
         }"`,
-        err: err,
+        err: err
       });
       continue;
     }
@@ -202,7 +202,7 @@ async function promptSshfs(config) {
       stdoutError({
         title: mountItem.remote,
         description: `Error while mounting`,
-        err: err,
+        err: err
       });
       continue;
     }
@@ -237,7 +237,7 @@ async function promptSshfs(config) {
         "There were poblems with unmomunting, force unmount by killing SSHFS process?",
       name: "urls",
       choices: forceUnmountChoices,
-      pageSize: promptPageSize,
+      pageSize: promptPageSize
     });
     stdoutNewline(1);
 
@@ -253,7 +253,7 @@ async function promptSshfs(config) {
     } catch (err) {
       stdoutError({
         title: `Error while running "ps -x" command`,
-        err: err,
+        err: err
       });
       return;
     }
@@ -261,7 +261,7 @@ async function promptSshfs(config) {
     const processes = responsePsx.stdout.split(os.EOL);
     if (!processes) {
       stdoutError({
-        title: `After running "ps -x" we were unable to find any SSHFS processes`,
+        title: `After running "ps -x" we were unable to find any SSHFS processes`
       });
       return;
     }
@@ -273,7 +273,7 @@ async function promptSshfs(config) {
       if (!processRow) {
         stdoutError({
           title: item.remote,
-          description: `Unable to find "${item.local}" SSHFS process`,
+          description: `Unable to find "${item.local}" SSHFS process`
         });
         continue;
       }
@@ -283,7 +283,7 @@ async function promptSshfs(config) {
       if (!processId) {
         stdoutError({
           title: item.remote,
-          description: `Unable to parse SSHFS process id`,
+          description: `Unable to parse SSHFS process id`
         });
         continue;
       }
@@ -296,7 +296,7 @@ async function promptSshfs(config) {
         stdoutError({
           title: item.remote,
           description: `Unable to kill SSHFS process with id "${processId}"`,
-          err: err,
+          err: err
         });
         continue;
       }
@@ -320,7 +320,7 @@ async function unmount(item) {
     stdoutError({
       title: item.remote,
       description: `Unable to unmount`,
-      err: err,
+      err: err
     });
     return false;
   }
@@ -332,7 +332,7 @@ async function unmount(item) {
     stdoutError({
       title: item.remote,
       description: `Unable to remove directory ${item.local}`,
-      err: err,
+      err: err
     });
   }
 
